@@ -1,8 +1,5 @@
 package com.jeremyfeinstein.slidingmenu.lib;
 
-import java.lang.reflect.Method;
-
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -10,22 +7,22 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
+import android.view.WindowInsets;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+
+import androidx.annotation.RequiresApi;
 
 import com.jeremyfeinstein.slidingmenu.lib.CustomViewAbove.OnPageChangeListener;
 
@@ -623,21 +620,9 @@ public class SlidingMenu extends RelativeLayout {
 	 *
 	 * @param i The width the Sliding Menu will open to, in pixels
 	 */
-	@SuppressWarnings("deprecation")
 	public void setBehindWidth(int i) {
-		int width;
-		Display display = ((WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE))
-				.getDefaultDisplay();
-		try {
-			Class<?> cls = Display.class;
-			Class<?>[] parameterTypes = {Point.class};
-			Point parameter = new Point();
-			Method method = cls.getMethod("getSize", parameterTypes);
-			method.invoke(display, parameter);
-			width = parameter.x;
-		} catch (Exception e) {
-			width = display.getWidth();
-		}
+		DisplayMetrics dm = getResources().getDisplayMetrics();
+		int width = dm.widthPixels;
 		setBehindOffset(width-i);
 	}
 
@@ -984,18 +969,34 @@ public class SlidingMenu extends RelativeLayout {
 	/* (non-Javadoc)
 	 * @see android.view.ViewGroup#fitSystemWindows(android.graphics.Rect)
 	 */
-	@SuppressLint("NewApi")
-	@Override
 	protected boolean fitSystemWindows(Rect insets) {
-		int leftPadding = insets.left;
-		int rightPadding = insets.right;
-		int topPadding = insets.top;
-		int bottomPadding = insets.bottom;
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN
+				&& Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT_WATCH) {
+			int leftPadding = insets.left;
+			int rightPadding = insets.right;
+			int topPadding = insets.top;
+			int bottomPadding = insets.bottom;
+			if (!mActionbarOverlay) {
+				Log.v(TAG, "setting padding!");
+				setPadding(leftPadding, topPadding, rightPadding, bottomPadding);
+			}
+			return true;
+		}
+		return super.fitSystemWindows(insets);
+	}
+
+	@RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
+	@Override
+	public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+		int leftPadding = insets.getSystemWindowInsetLeft();
+		int rightPadding = insets.getSystemWindowInsetRight();
+		int topPadding = insets.getSystemWindowInsetTop();
+		int bottomPadding = insets.getSystemWindowInsetBottom();
 		if (!mActionbarOverlay) {
 			Log.v(TAG, "setting padding!");
 			setPadding(leftPadding, topPadding, rightPadding, bottomPadding);
 		}
-		return true;
+		return insets.consumeSystemWindowInsets();
 	}
 
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)

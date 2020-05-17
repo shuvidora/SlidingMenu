@@ -8,6 +8,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 
+@Deprecated
 public class SlidingPreferenceActivity extends PreferenceActivity implements SlidingActivityBase {
 
 	private SlidingActivityHelper mHelper;
